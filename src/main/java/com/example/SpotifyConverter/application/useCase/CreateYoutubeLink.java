@@ -39,18 +39,22 @@ public class CreateYoutubeLink {
         HttpRequest request = HttpRequest.newBuilder(URI.create(uri)).GET().build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         Document doc = Jsoup.parse(response.body());
-        List<String> youtubeLinks = doc.select("a[href]")
-                .stream()
-                .map(link -> link.attr("href"))  // Extrai o valor do atributo href
-                .filter(href -> href.contains("youtube.com/watch"))  // Filtra apenas links do YouTube
-                .map(href -> href.startsWith("/url?q=") ? href.substring(7).split("&")[0] : href)  // Remove prefixos do Google
-                .collect(Collectors.toList());
-        String youtubeMusicLink = youtubeLinks.getFirst();
+        String youtubeMusicLink = this.extractLink(doc);
         try {
             spotifyTrack.setYoutubeLink(youtubeMusicLink);
             return repository.save(spotifyTrack);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String extractLink(Document doc) {
+        List<String> youtubeLinks = doc.select("a[href]")
+                .stream()
+                .map(link -> link.attr("href"))  // Extrai o valor do atributo href
+                .filter(href -> href.contains("youtube.com/watch"))  // Filtra apenas links do YouTube
+                .map(href -> href.startsWith("/url?q=") ? href.substring(7).split("&")[0] : href)  // Remove prefixos do Google
+                .collect(Collectors.toList());
+        return youtubeLinks.getFirst();
     }
 }

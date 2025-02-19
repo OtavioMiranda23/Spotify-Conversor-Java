@@ -27,9 +27,6 @@ class SpotifyConverterApplicationTests {
 	@Test
 	void convertToYoutube () throws IOException, InterruptedException {
 		HttpClient client = HttpClient.newHttpClient();
-		HttpRequest requestToken = HttpRequest.newBuilder(URI.create("http://localhost:8080/auth")).build();
-		HttpResponse<String> responseToken = client.send(requestToken, HttpResponse.BodyHandlers.ofString());
-		assertNotNull(responseToken.body());
 		String trackId = "1cM4eMzeqalRs8HbXtfT9X";
 		HttpRequest.BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofString(trackId);
 		HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:8080/convert/youtube")).POST(bodyPublisher).build();
