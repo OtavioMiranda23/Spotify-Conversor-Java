@@ -12,8 +12,6 @@ public class GetLinkById {
     }
 
     public SpotifyTrack execute(String id) {
-        var track = repository.findAll();
-        System.out.println("->" + track);
         return repository.findById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build()).getBody();
     }
 }

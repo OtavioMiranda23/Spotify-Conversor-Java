@@ -3,13 +3,13 @@ package com.example.SpotifyConverter.infra.controllers;
 import com.example.SpotifyConverter.application.useCase.CreateYoutubeLink;
 import com.example.SpotifyConverter.entities.SpotifyToken;
 import com.example.SpotifyConverter.entities.SpotifyTrack;
-import com.example.SpotifyConverter.infra.repositories.SpotifyTrackRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -25,7 +25,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping
-public class Authenticate {
+public class SpotifyController {
     @Value("${app.clientId}")
     String clientId;
 
@@ -35,7 +35,7 @@ public class Authenticate {
     String token;
 
     private final CreateYoutubeLink createYoutubeLink;
-    public Authenticate(CreateYoutubeLink createYoutubeLink) {
+    public SpotifyController(CreateYoutubeLink createYoutubeLink) {
         this.createYoutubeLink = createYoutubeLink;
     }
     @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -63,7 +63,7 @@ public class Authenticate {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("convert/youtube")
-    public void convertToYoutubeToken(@RequestBody String musicId) throws Exception {
+    public ResponseEntity<SpotifyTrack> convertToYoutubeToken(@RequestBody String musicId) throws Exception {
         String url = "https://api.spotify.com/v1/tracks/" + musicId;
         HttpClient client = HttpClient.newHttpClient();
         String token = "Bearer " + this.token;
@@ -81,6 +81,7 @@ public class Authenticate {
         }
         String albumName = rootNode.path("album").path("name").asText();
         var musicName = rootNode.path("name").asText();
-        createYoutubeLink.execute(musicId, musicName, artistsFounded, albumName);
+        var track = createYoutubeLink.execute(musicId, musicName, artistsFounded, albumName);
+        return new ResponseEntity<>(track, HttpStatus.OK);
     }
 }

@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import com.example.SpotifyConverter.infra.repositories.SpotifyTrackRepository;
 import org.jsoup.*;
@@ -26,7 +27,12 @@ public class CreateYoutubeLink {
         this.repository = repository;
     }
 
-    public void execute(String musicId, String musicName, ArrayList<String> artistsFounded, String albumName) throws Exception {
+    public SpotifyTrack execute(String musicId, String musicName, ArrayList<String> artistsFounded, String albumName) throws Exception {
+        Optional<SpotifyTrack> trackFinded = repository.findById(musicId);
+        if (trackFinded.isPresent()) {
+            System.out.println("Recuperado do Banco");
+            return trackFinded.get();
+        }
         HttpClient client = HttpClient.newHttpClient();
         SpotifyTrack spotifyTrack = new SpotifyTrack(musicId, musicName, artistsFounded, albumName);
         String uri = this.baseGoogleSearchUrl + spotifyTrack.getMusicName() + spotifyTrack.getArtistsName() + spotifyTrack.getAlbumsName() + "&tbm=vid";
@@ -42,9 +48,7 @@ public class CreateYoutubeLink {
         String youtubeMusicLink = youtubeLinks.getFirst();
         try {
             spotifyTrack.setYoutubeLink(youtubeMusicLink);
-            repository.save(spotifyTrack);
-            List<SpotifyTrack> musics = repository.findAll();
-            musics.forEach(m -> System.out.println(m.getId() + m.getAlbumsName() + m.getArtistsName() + m.getMusicName()));
+            return repository.save(spotifyTrack);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
