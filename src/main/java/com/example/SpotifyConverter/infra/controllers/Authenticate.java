@@ -1,7 +1,9 @@
 package com.example.SpotifyConverter.infra.controllers;
 
+import com.example.SpotifyConverter.application.useCase.CreateYoutubeLink;
 import com.example.SpotifyConverter.entities.SpotifyToken;
 import com.example.SpotifyConverter.entities.SpotifyTrack;
+import com.example.SpotifyConverter.infra.repositories.SpotifyTrackRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,9 +21,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Base64;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping
@@ -34,6 +34,10 @@ public class Authenticate {
 
     String token;
 
+    private final CreateYoutubeLink createYoutubeLink;
+    public Authenticate(CreateYoutubeLink createYoutubeLink) {
+        this.createYoutubeLink = createYoutubeLink;
+    }
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("auth")
     public String getAuth() throws JsonProcessingException {
@@ -59,7 +63,7 @@ public class Authenticate {
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("convert/youtube")
-    public Map<String, Object> convertToYoutubeToken(@RequestBody String musicId) throws Exception {
+    public void convertToYoutubeToken(@RequestBody String musicId) throws Exception {
         String url = "https://api.spotify.com/v1/tracks/" + musicId;
         HttpClient client = HttpClient.newHttpClient();
         String token = "Bearer " + this.token;
@@ -68,7 +72,7 @@ public class Authenticate {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(response.body());
         JsonNode artistsNode = rootNode.path("artists");
-        LinkedList<String> artistsFounded = new LinkedList<>();
+        var artistsFounded = new ArrayList<String>();
         for (JsonNode artistNode: artistsNode) {
             String name = artistNode.path("name").asText();
             if (!name.isEmpty()) {
@@ -76,7 +80,7 @@ public class Authenticate {
             }
         }
         String albumName = rootNode.path("album").path("name").asText();
-        SpotifyTrack spotifyTrack = new SpotifyTrack(musicId, rootNode.path("name").asText(), artistsFounded, albumName);
-        return spotifyTrack.toMap();
+        var musicName = rootNode.path("name").asText();
+        createYoutubeLink.execute(musicId, musicName, artistsFounded, albumName);
     }
 }

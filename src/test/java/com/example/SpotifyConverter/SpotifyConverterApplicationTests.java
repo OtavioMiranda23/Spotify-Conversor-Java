@@ -1,7 +1,11 @@
 package com.example.SpotifyConverter;
 
+import com.example.SpotifyConverter.application.useCase.GetLinkById;
+import com.example.SpotifyConverter.entities.SpotifyTrack;
+import com.example.SpotifyConverter.infra.repositories.SpotifyTrackRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
@@ -17,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class SpotifyConverterApplicationTests {
+	@Autowired
+	private SpotifyTrackRepository repository;
 
 	@Test
 	void convertToYoutube () throws IOException, InterruptedException {
@@ -24,7 +30,6 @@ class SpotifyConverterApplicationTests {
 		HttpRequest requestToken = HttpRequest.newBuilder(URI.create("http://localhost:8080/auth")).build();
 		HttpResponse<String> responseToken = client.send(requestToken, HttpResponse.BodyHandlers.ofString());
 		assertNotNull(responseToken.body());
-
 		String trackId = "1cM4eMzeqalRs8HbXtfT9X";
 		HttpRequest.BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofString(trackId);
 		HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:8080/convert/youtube")).POST(bodyPublisher).build();
@@ -37,9 +42,10 @@ class SpotifyConverterApplicationTests {
 		expectResponse.put("artistsName", artistName);
 		expectResponse.put("id", "1cM4eMzeqalRs8HbXtfT9X");
 		expectResponse.put("musicName", "Chega de Saudade - Ultimate Mix");
-		ObjectMapper objectMapper = new ObjectMapper();
-		String expectedJson = objectMapper.writeValueAsString(expectResponse);
-        assertEquals(expectedJson, response.body());
+		var linkById = new GetLinkById(repository);
+		SpotifyTrack track = linkById.execute(trackId);
+		System.out.println("->" + track);
+        assertEquals(expectResponse.get("id"), track.getId());
 	}
 
 }
