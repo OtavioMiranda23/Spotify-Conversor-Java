@@ -26,7 +26,6 @@ public class GetSpotifyToken {
 
     public String execute() throws JsonProcessingException {
         String idSecret = this.clientId + ":" + this.clientSecret;
-        System.out.println("idSecret: " + idSecret);
         byte[] bytes = idSecret.getBytes();
         byte[] encoded = Base64.getEncoder().encode(bytes);
         String uri = "https://accounts.spotify.com/api/token";

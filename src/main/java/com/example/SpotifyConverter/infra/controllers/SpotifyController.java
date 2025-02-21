@@ -3,6 +3,9 @@ package com.example.SpotifyConverter.infra.controllers;
 import com.example.SpotifyConverter.application.useCase.CreateYoutubeLink;
 import com.example.SpotifyConverter.entities.SpotifyTrack;
 import com.example.SpotifyConverter.application.useCase.GetSpotifyToken;
+import com.example.SpotifyConverter.infra.controllers.dto.SpotifyControllerDto;
+import com.example.SpotifyConverter.infra.controllers.dto.SpotifyTrackDto;
+import com.example.SpotifyConverter.infra.services.SpotifyServices;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +19,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping
@@ -23,34 +28,31 @@ public class SpotifyController {
     String token;
 
     private final CreateYoutubeLink createYoutubeLink;
-    private final GetSpotifyToken getSpotifyToken;
-    public SpotifyController(CreateYoutubeLink createYoutubeLink, GetSpotifyToken getSpotifyToken) throws JsonProcessingException {
+    private final SpotifyServices spotifyServices;
+    public SpotifyController(CreateYoutubeLink createYoutubeLink, SpotifyServices spotifyServices) {
         this.createYoutubeLink = createYoutubeLink;
-        this.getSpotifyToken = getSpotifyToken;
+        this.spotifyServices = spotifyServices;
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping("convert/youtube")
-    public ResponseEntity<SpotifyTrack> convertToYoutubeToken(@RequestBody String musicId) throws Exception {
-        this.token = getSpotifyToken.execute();
-        String url = "https://api.spotify.com/v1/tracks/" + musicId;
-        HttpClient client = HttpClient.newHttpClient();
-        String token = "Bearer " + this.token;
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).headers("Authorization", token).GET().build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode rootNode = mapper.readTree(response.body());
-        JsonNode artistsNode = rootNode.path("artists");
-        var artistsFounded = new ArrayList<String>();
-        for (JsonNode artistNode: artistsNode) {
-            String name = artistNode.path("name").asText();
-            if (!name.isEmpty()) {
-                artistsFounded.add(name);
-            }
+    public ResponseEntity<?> convertToYoutubeToken(@RequestBody SpotifyControllerDto dto) throws Exception {
+        Pattern pattern = Pattern.compile("(track/)(.+)");
+        Matcher matcher = pattern.matcher(dto.link());
+        if (!matcher.find()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Link inválido. Certifique-se de que o link contém '/track/{id}'");
+
         }
-        String albumName = rootNode.path("album").path("name").asText();
-        var musicName = rootNode.path("name").asText();
-        var track = createYoutubeLink.execute(musicId, musicName, artistsFounded, albumName);
-        return new ResponseEntity<>(track, HttpStatus.OK);
+        String musicId = matcher.group(2);
+        SpotifyTrack track = spotifyServices.fetchTrack(musicId);
+        var trackWithLink = createYoutubeLink.execute(musicId, track.getMusicName(), track.getArtistsName(), track.getAlbumsName());
+        if (trackWithLink == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Não foi encontrado um link correspondente com a música enviada");
+        }
+        var trackDto = new SpotifyTrackDto(trackWithLink.getMusicName(), trackWithLink.getArtistsName(), trackWithLink.getAlbumsName(), trackWithLink.getYoutubeLink());
+        return new ResponseEntity<>(trackDto, HttpStatus.OK);
+
     }
 }

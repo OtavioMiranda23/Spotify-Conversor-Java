@@ -25,37 +25,24 @@ public class SpotifyTrack {
     private String youtubeLink;
 
     public  SpotifyTrack(String id, String musicName, List<String> artistsName, String albumsName) throws Exception {
-        if (id == null) {
-            throw new Exception("id is null");
+        if (id == null || id.isBlank()) {
+            throw new IllegalArgumentException("O id não pode ser nulo ou vazio");
         }
         this.id = id;
-        if (musicName == null) {
-            throw new Exception("music name is null");
+        if (musicName == null || musicName.isBlank()) {
+            throw new IllegalArgumentException("O nome da musica não pode ser nulo ou vazio");
         }
         this.musicName = musicName;
 
-        if (artistsName.isEmpty()) {
-            this.artistsName = artistsName;
+        if (artistsName == null || artistsName.isEmpty()) {
+            throw new IllegalArgumentException("O nome do artista não pode ser nulo ou vazio");
         }
         this.artistsName = artistsName;
-        if (albumsName == null) {
-            this.albumsName = albumsName;
-        }
         this.albumsName = albumsName;
     }
 
     public SpotifyTrack() {
 
-    }
-
-    public Map<String, Object> toMap()  {
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", id);
-        map.put("musicName", this.musicName);
-        map.put("artistsName", this.artistsName);
-        map.put("albumName", this.albumsName);
-
-        return map;
     }
 
     public String getId() {
@@ -74,10 +61,13 @@ public class SpotifyTrack {
         return this.albumsName.replace(" ", "+");
     }
 
-    public void setYoutubeLink(String youtubeLink) throws Exception {
-        if (youtubeLink.length() < 1) {
-            throw new Exception("Youtube link not be empty");
+    public void setYoutubeLink(String youtubeLink) {
+        if (youtubeLink == null || youtubeLink.isBlank()) {
+            throw new IllegalArgumentException("O link do YouTube não pode ser nulo ou vazio.");
         }
         this.youtubeLink = youtubeLink;
+    }
+    public String getYoutubeLink() {
+        return  this.youtubeLink;
     }
 }
