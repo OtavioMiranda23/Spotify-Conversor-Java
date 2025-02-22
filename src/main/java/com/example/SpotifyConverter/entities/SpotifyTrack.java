@@ -1,9 +1,4 @@
 package com.example.SpotifyConverter.entities;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
 import java.util.*;
 
 import jakarta.persistence.*;
@@ -12,8 +7,10 @@ import jakarta.persistence.*;
 @Table(name = "tb_spotify_track")
 public class SpotifyTrack {
     @Id
-    @Column(name = "id")
-    private String id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
+    @Column(name = "id_spotify", nullable = false, unique = true)
+    private String idSpotify;
     @Column(name = "music_name")
     private String musicName;
     @ElementCollection
@@ -23,30 +20,26 @@ public class SpotifyTrack {
     private String albumsName;
     @Column(name = "youtube_link")
     private String youtubeLink;
-
-    public  SpotifyTrack(String id, String musicName, List<String> artistsName, String albumsName) throws Exception {
-        if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("O id não pode ser nulo ou vazio");
+    public  SpotifyTrack(String idSpotify, String musicName, List<String> artistsName, String albumsName) throws Exception {
+        if (idSpotify == null || idSpotify.isBlank()) {
+            throw new IllegalArgumentException("O idSpotify não pode ser nulo ou vazio");
         }
-        this.id = id;
         if (musicName == null || musicName.isBlank()) {
             throw new IllegalArgumentException("O nome da musica não pode ser nulo ou vazio");
         }
-        this.musicName = musicName;
-
         if (artistsName == null || artistsName.isEmpty()) {
             throw new IllegalArgumentException("O nome do artista não pode ser nulo ou vazio");
         }
+        this.idSpotify = idSpotify;
         this.artistsName = artistsName;
+        this.musicName = musicName;
         this.albumsName = albumsName;
     }
 
-    public SpotifyTrack() {
+    public SpotifyTrack() {}
 
-    }
-
-    public String getId() {
-        return this.id;
+    public String getidSpotify() {
+        return this.idSpotify;
     }
 
     public String getMusicName() {
@@ -61,13 +54,16 @@ public class SpotifyTrack {
         return this.albumsName.replace(" ", "+");
     }
 
-    public void setYoutubeLink(String youtubeLink) {
+    public void setYoutubeLink(String youtubeLink, int siteToConvert) {
         if (youtubeLink == null || youtubeLink.isBlank()) {
             throw new IllegalArgumentException("O link do YouTube não pode ser nulo ou vazio.");
         }
+        System.out.println(siteToConvert);
+        if (siteToConvert == 1){
+            this.youtubeLink = this.youtubeLink.replace("://www", "://music");
+            return;
+        }
         this.youtubeLink = youtubeLink;
     }
-    public String getYoutubeLink() {
-        return  this.youtubeLink;
-    }
+    public String getYoutubeLink() { return  this.youtubeLink; }
 }

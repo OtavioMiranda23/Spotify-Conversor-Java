@@ -25,8 +25,6 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping
 public class SpotifyController {
-    String token;
-
     private final CreateYoutubeLink createYoutubeLink;
     private final SpotifyServices spotifyServices;
     public SpotifyController(CreateYoutubeLink createYoutubeLink, SpotifyServices spotifyServices) {
@@ -46,7 +44,7 @@ public class SpotifyController {
         }
         String musicId = matcher.group(2);
         SpotifyTrack track = spotifyServices.fetchTrack(musicId);
-        var trackWithLink = createYoutubeLink.execute(musicId, track.getMusicName(), track.getArtistsName(), track.getAlbumsName());
+        var trackWithLink = createYoutubeLink.execute(musicId, dto.siteToConvert(), track.getMusicName(), track.getArtistsName(), track.getAlbumsName());
         if (trackWithLink == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Não foi encontrado um link correspondente com a música enviada");

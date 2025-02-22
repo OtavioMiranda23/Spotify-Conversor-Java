@@ -37,12 +37,12 @@ class SpotifyConverterApplicationTests {
 		Map<String, Object> expectResponse = new HashMap<>();
 		expectResponse.put("albumName", "Chega de Saudade / O Amor o Sorriso e a Flor / João Gilberto (1961) [Ultimate Mix]");
 		expectResponse.put("artistsName", artistName);
-		expectResponse.put("id", "1cM4eMzeqalRs8HbXtfT9X");
+		expectResponse.put("idMusic", "1cM4eMzeqalRs8HbXtfT9X");
 		expectResponse.put("musicName", "Chega de Saudade - Ultimate Mix");
 		var linkById = new GetLinkById(repository);
 		SpotifyTrack track = linkById.execute(trackId);
 		System.out.println("->" + track);
-        assertEquals(expectResponse.get("id"), track.getId());
+        assertEquals(expectResponse.get("idMusic"), track.getidSpotify());
 	}
 
 }

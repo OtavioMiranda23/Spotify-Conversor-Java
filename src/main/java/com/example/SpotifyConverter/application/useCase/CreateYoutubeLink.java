@@ -30,11 +30,13 @@ public class CreateYoutubeLink {
         this.repository = repository;
     }
 
-    public SpotifyTrack execute(String musicId, String musicName, List<String> artistsFounded, String albumName) throws Exception {
-        Optional<SpotifyTrack> trackFinded = repository.findById(musicId);
+    public SpotifyTrack execute(String musicId, int siteToConvert, String musicName, List<String> artistsFounded, String albumName) throws Exception {
+        Optional<SpotifyTrack> trackFinded = repository.findByIdSpotify(musicId);
         if (trackFinded.isPresent()) {
             System.out.println("Recuperado do Banco");
-            return trackFinded.get();
+            var track = trackFinded.get();
+            track.setYoutubeLink(track.getYoutubeLink(), siteToConvert);
+            return track;
         }
         try {
             HttpClient client = HttpClient.newHttpClient();
@@ -47,7 +49,7 @@ public class CreateYoutubeLink {
             }
             Document doc = Jsoup.parse(response.body());
             String youtubeMusicLink = this.extractLink(doc);
-            spotifyTrack.setYoutubeLink(youtubeMusicLink);
+            spotifyTrack.setYoutubeLink(youtubeMusicLink, siteToConvert);
             return repository.save(spotifyTrack);
         }
         catch (IOException | InterruptedException e) {
