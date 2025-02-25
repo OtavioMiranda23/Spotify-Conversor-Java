@@ -18,8 +18,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class SpotifyConverterApplicationTests {
 	@Autowired
 	private SpotifyTrackRepository repository;
@@ -27,22 +26,26 @@ class SpotifyConverterApplicationTests {
 	@Test
 	void convertToYoutube () throws IOException, InterruptedException {
 		HttpClient client = HttpClient.newHttpClient();
-		String trackId = "1cM4eMzeqalRs8HbXtfT9X";
-		HttpRequest.BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofString(trackId);
-		HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:8080/convert/youtube")).POST(bodyPublisher).build();
+		String trackId = "https://open.spotify.com/intl-pt/track/3vNwY4KaBRnJP4G6UBJPZH";
+		var bodyMap = new HashMap<>();
+		bodyMap.put("link", trackId);
+		bodyMap.put("site", 0);
+		var objectMapper  = new ObjectMapper();
+		objectMapper.writeValueAsString(bodyMap);
+		String requestBodyJson = objectMapper.writeValueAsString(bodyMap);
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("http://localhost:8080/convert/youtube"))
+				.header("Content-Type", "application/json")
+				.POST(HttpRequest.BodyPublishers.ofString(requestBodyJson))
+				.build();
 		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-		System.out.println(response.body());
 		LinkedList<String> artistName = new LinkedList<>();
 		artistName.add("João Gilberto");
 		Map<String, Object> expectResponse = new HashMap<>();
-		expectResponse.put("albumName", "Chega de Saudade / O Amor o Sorriso e a Flor / João Gilberto (1961) [Ultimate Mix]");
-		expectResponse.put("artistsName", artistName);
 		expectResponse.put("idMusic", "1cM4eMzeqalRs8HbXtfT9X");
-		expectResponse.put("musicName", "Chega de Saudade - Ultimate Mix");
-		var linkById = new GetLinkById(repository);
-		SpotifyTrack track = linkById.execute(trackId);
-		System.out.println("->" + track);
-        assertEquals(expectResponse.get("idMusic"), track.getidSpotify());
+		expectResponse.put("link", "https://www.youtube.com/watch%3Fv%3Dtlp8iY4g--4");
+		ObjectMapper objectMapper1 = new ObjectMapper();
+		Map<String, Object> mapResponse = objectMapper1.readValue(response.body(), Map.class);
+        assertEquals(expectResponse.get("link"), mapResponse.get("link"));
 	}
-
 }
